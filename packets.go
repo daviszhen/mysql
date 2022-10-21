@@ -27,15 +27,21 @@ import (
 // Read packet to buffer 'data'
 func (mc *mysqlConn) readPacket() ([]byte, error) {
 	var prevData []byte
+	var head string
+	if mc.netConn != nil {
+		head = fmt.Sprintf("++>: netconn LocalAddr %s", mc.netConn.LocalAddr())
+	}
 	for {
 		// read packet header
 		data, err := mc.buf.readNext(4)
 		if err != nil {
 			if cerr := mc.canceled.Value(); cerr != nil {
+				fmt.Println("++>: ", head, err)
 				return nil, cerr
 			}
 			errLog.Print(err)
 			mc.Close()
+			fmt.Println("++>: ", head, ErrInvalidConn)
 			return nil, ErrInvalidConn
 		}
 
@@ -45,8 +51,10 @@ func (mc *mysqlConn) readPacket() ([]byte, error) {
 		// check packet sync [8 bit]
 		if data[3] != mc.sequence {
 			if data[3] > mc.sequence {
+				fmt.Println("++>: ", head, ErrPktSyncMul)
 				return nil, ErrPktSyncMul
 			}
+			fmt.Println("++>: ", head, ErrPktSync)
 			return nil, ErrPktSync
 		}
 		mc.sequence++
@@ -58,6 +66,7 @@ func (mc *mysqlConn) readPacket() ([]byte, error) {
 			if prevData == nil {
 				errLog.Print(ErrMalformPkt)
 				mc.Close()
+				fmt.Println("++>: ", head, ErrInvalidConn)
 				return nil, ErrInvalidConn
 			}
 
@@ -68,10 +77,12 @@ func (mc *mysqlConn) readPacket() ([]byte, error) {
 		data, err = mc.buf.readNext(pktLen)
 		if err != nil {
 			if cerr := mc.canceled.Value(); cerr != nil {
+				fmt.Println("++>: ", head, cerr)
 				return nil, cerr
 			}
 			errLog.Print(err)
 			mc.Close()
+			fmt.Println("++>: ", head, ErrInvalidConn)
 			return nil, ErrInvalidConn
 		}
 
