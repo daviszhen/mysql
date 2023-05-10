@@ -295,6 +295,7 @@ func (mc *mysqlConn) interpolateParams(query string, args []driver.Value) (strin
 }
 
 func (mc *mysqlConn) Exec(query string, args []driver.Value) (driver.Result, error) {
+	infoLog.Print("Exec",mc.netConn.LocalAddr(),mc.netConn.RemoteAddr(),query)
 	if mc.closed.IsSet() {
 		errLog.Print(ErrInvalidConn)
 		return nil, driver.ErrBadConn
@@ -352,6 +353,7 @@ func (mc *mysqlConn) exec(query string) error {
 }
 
 func (mc *mysqlConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+	infoLog.Print("query",mc.netConn.LocalAddr(),mc.netConn.RemoteAddr(),query)
 	return mc.query(query, args)
 }
 
@@ -454,6 +456,7 @@ func (mc *mysqlConn) Ping(ctx context.Context) (err error) {
 		errLog.Print(ErrInvalidConn)
 		return driver.ErrBadConn
 	}
+	infoLog.Print("ping",mc.netConn.LocalAddr(),mc.netConn.RemoteAddr())
 
 	if err = mc.watchCancel(ctx); err != nil {
 		return
@@ -493,6 +496,7 @@ func (mc *mysqlConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver
 }
 
 func (mc *mysqlConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+	infoLog.Print("QueryContext",mc.netConn.LocalAddr(),mc.netConn.RemoteAddr(),query)
 	dargs, err := namedValueToValue(args)
 	if err != nil {
 		return nil, err
@@ -512,6 +516,7 @@ func (mc *mysqlConn) QueryContext(ctx context.Context, query string, args []driv
 }
 
 func (mc *mysqlConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+	infoLog.Print("ExecContext",mc.netConn.LocalAddr(),mc.netConn.RemoteAddr(),query)
 	dargs, err := namedValueToValue(args)
 	if err != nil {
 		return nil, err
